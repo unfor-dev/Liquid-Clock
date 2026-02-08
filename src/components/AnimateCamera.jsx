@@ -1,22 +1,20 @@
 import { useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { easing } from "maath";
 
-function AnimateCamera() {
-  const camera = useThree((state) => state.camera);
-  const orbitControlsRef = useRef();
-  useFrame((state, delta) => {
-    easing.damp(state.camera.position, "x", -state.pointer.x * 4.5, 0.7, delta);
-    easing.damp(state.camera.position, "y", -state.pointer.y * 2.5, 0.7, delta);
-    if (orbitControlsRef.current) {
-      orbitControlsRef.current.update();
-    }
+export default function AnimateCamera() {
+  const controlsRef = useRef();
+
+  useFrame((s, delta) => {
+    easing.damp(s.camera.position, "x", -s.pointer.x * 4.5, 0.7, delta);
+    easing.damp(s.camera.position, "y", -s.pointer.y * 2.5, 0.7, delta);
+    controlsRef.current?.update();
   });
 
   return (
     <OrbitControls
-      ref={orbitControlsRef}
+      ref={controlsRef}
       target={[0, 0, 0]}
       dampingFactor={0.25}
       maxDistance={25}
@@ -30,5 +28,3 @@ function AnimateCamera() {
     />
   );
 }
-
-export default AnimateCamera;

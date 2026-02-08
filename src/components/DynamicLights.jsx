@@ -1,26 +1,20 @@
-import { easing } from "maath";
-import { useRef } from "react";
+import { useRef, memo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { easing } from "maath";
 
-export default function DynamicLights() {
-  const lightRef = useRef();
+export default memo(function DynamicLights() {
+  const ref = useRef();
 
-  useFrame((state, delta) => {
+  useFrame((s, delta) => {
     easing.damp3(
-      lightRef.current.position,
-      [state.pointer.x, state.pointer.y, -0.01],
+      ref.current.position,
+      [s.pointer.x, s.pointer.y, -0.01],
       0.6,
       delta
     );
   });
 
   return (
-    <>
-      <directionalLight
-        position={[0.4, 1, -0.2]}
-        intensity={8}
-        ref={lightRef}
-      />
-    </>
+    <directionalLight ref={ref} position={[0.4, 1, -0.2]} intensity={8} />
   );
-}
+})

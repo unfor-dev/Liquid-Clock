@@ -1,24 +1,61 @@
-import React, { Suspense } from "react";
+import { Suspense, useRef, useState, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
+import { NeutralToneMapping } from "three";
 import Scene from "./components/Scene";
 import AnimateCamera from "./components/AnimateCamera";
 import Clock from "./components/Clock";
 import BackgroundImageCover from "./components/BackgroundImageCover";
 import DynamicLights from "./components/DynamicLights";
 import CustomCursor from "./components/CustomCursor";
-import * as THREE from "three";
-import LoadingScreen from "./components/LoadingScreen/LoadingScreen";
+import LoadingScreen from "./components/LoadingScreen";
 import Settings from "./components/Settings";
 
-function App() {
+const GL_CONFIG = {
+  antialias: true,
+  powerPreference: "high-performance",
+  toneMappingExposure: 1.5,
+  stencil: false,
+  alpha: false,
+  toneMapping: NeutralToneMapping,
+};
+
+const CAMERA_CONFIG = {
+  near: 0.1,
+  far: 50,
+  fov: 5,
+  position: [0, 0, 25],
+};
+
+export default function App() {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+
+  const toggleMusic = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.paused ? audio.play() : audio.pause();
+    setPlaying((p) => !p);
+  }, []);
+
   return (
-    <div className="main-container">
+    <div className="app">
       <LoadingScreen />
-      <Canvas {...canvasProps}>
+
+      <audio ref={audioRef} src="/sound/music.mp3" loop preload="none" />
+
+      <button
+        className={`music-btn ${playing ? "playing" : ""}`}
+        onClick={toggleMusic}
+      >
+        <span className="dot" />
+        {playing ? "Pause" : "Sound"}
+      </button>
+
+      <Canvas gl={GL_CONFIG} camera={CAMERA_CONFIG} dpr={[1, 1.5]}>
         <Suspense fallback={null}>
+          <Scene />
           <Clock />
           <Settings />
-          <Scene />
           <CustomCursor />
           <AnimateCamera />
           <DynamicLights />
@@ -28,37 +65,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
-
-const canvasProps = {
-  gl: {
-    antialias: true,
-    powerPreference: "high-performance",
-    toneMappingExposure: 1.5,
-    stencil: false,
-    alpha: false,
-    toneMapping: THREE.NeutralToneMapping,
-  },
-  camera: { near: 0.01, far: 1000, fov: 5, position: [0, 0, 25] },
-  dpr: [1, 1.5],
-};
-
-/**
- * Music toggle button
- */
-const audio = document.getElementById('backgroundMusic')
-const musicButton = document.getElementById('musicButton')
-let isPlaying = false
-
-musicButton.addEventListener('click', () => {
-    if (!isPlaying) {
-        audio.play()
-        musicButton.textContent = 'Pause'
-        isPlaying = true
-    } else {
-        audio.pause()
-        musicButton.textContent = 'Play'
-        isPlaying = false
-    }
-})

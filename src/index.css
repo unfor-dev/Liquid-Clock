@@ -1,65 +1,153 @@
-* {
+:root {
+  --progress: 0;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  margin: 0;
+  padding: 0;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  cursor: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
 }
 
 *:focus {
-  outline: none !important;
-  box-shadow: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#root {
-  width: 100vw;
-  height: 100vh;
-  cursor: none;
-}
-
-body {
-  margin: 0;
-  background-color: #000;
-  margin: 0;
-  padding: 0;
-  user-select: none;
-  overflow: hidden;
-  overscroll-behavior: none;
-  cursor: none;
+  outline: none;
 }
 
 canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
+  inset: 0;
   cursor: none;
 }
 
-.main-container {
-  width: 100vw;
-  height: 100vh;
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-#musicButton {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 10;
-    padding: 10px 16px;
-    border: 2px solid rgba(143, 153, 141, 0.531);
-    background: rgba(227, 218, 218, 0.276);
-    color: rgb(210, 210, 224);
-    font-size: 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: "Nunito Sans", sans-serif; 
+/* ── Music Button ── */
+.music-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-#musicButton:hover {
-    background-color: transparent;
+.music-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.music-btn:active {
+  transform: scale(0.97);
+}
+
+.music-btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.3s;
+}
+
+.music-btn.playing .dot {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Loading Screen ── */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  background: #0a0a0a;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loader.done {
+  opacity: 0;
+  transform: scale(1.1);
+  pointer-events: none;
+}
+
+.loader-ring {
+  --size: 120px;
+  --stroke: 2px;
+  --radius: calc((var(--size) - var(--stroke)) / 2);
+  --circumference: calc(var(--radius) * 3.14159265 * 2);
+  --dash: calc((var(--progress) * var(--circumference)) / 100);
+  width: var(--size);
+  height: var(--size);
+}
+
+.loader-ring circle {
+  cx: calc(var(--size) / 2);
+  cy: calc(var(--size) / 2);
+  r: var(--radius);
+  stroke-width: var(--stroke);
+  fill: none;
+  stroke-linecap: round;
+}
+
+.loader-ring .track {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+
+.loader-ring .fill {
+  stroke: rgba(255, 255, 255, 0.7);
+  transform: rotate(-90deg);
+  transform-origin: center;
+  stroke-dasharray: var(--dash) calc(var(--circumference) - var(--dash));
+  transition: stroke-dasharray 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loader-text {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }

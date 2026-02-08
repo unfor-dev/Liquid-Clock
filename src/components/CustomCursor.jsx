@@ -1,70 +1,59 @@
 import { Capsule, MeshTransmissionMaterial, Sphere } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
-import { useControls } from "leva";
 import { useSnapshot } from "valtio";
 import { state } from "../store";
 
+const GSAP_CONFIG = { duration: 1.5, ease: "elastic(1, 0.3)" };
+const HALF_PI = Math.PI / 2;
+
+// Reduced segments: 16 instead of 32 — cursor is small, no visual difference
+const CAPSULE_IDLE = [0.1, 0.3, 16, 16];
+const CAPSULE_DRAG = [0.08, 0.1, 16, 16];
+const SPHERE_ARGS = [0.1, 16, 16];
+
 export default function CustomCursor() {
-  const cursorRef = useRef();
-  const [clicked, setClicked] = useState(false);
+  const groupRef = useRef();
+  const [pressed, setPressed] = useState(false);
   const { hovered, reflectivity, isDragging } = useSnapshot(state);
 
-  useFrame((state, delta) => {
-    cursorRef.current.position.set(
-      state.pointer.x * (state.viewport.width / 2),
-      state.pointer.y * (state.viewport.height / 2),
+  useFrame((s) => {
+    groupRef.current.position.set(
+      s.pointer.x * (s.viewport.width / 2),
+      s.pointer.y * (s.viewport.height / 2),
       0.1
     );
   });
 
+  const active = pressed || hovered;
+
   useEffect(() => {
-    if (clicked || hovered) {
-      if (isDragging) {
-        gsap.to(cursorRef.current.scale, {
-          x: 1,
-          y: 1,
-          z: 0.1,
-          duration: 1.5,
-          ease: "elastic(1, 0.3)",
-        });
-      } else {
-        gsap.to(cursorRef.current.scale, {
-          x: 1.7,
-          y: 1.7,
-          z: 0.2,
-          duration: 1.5,
-          ease: "elastic(1, 0.3)",
-        });
-      }
+    const target = groupRef.current.scale;
+
+    if (active && isDragging) {
+      gsap.to(target, { x: 1, y: 1, z: 0.1, ...GSAP_CONFIG });
+    } else if (active) {
+      gsap.to(target, { x: 1.7, y: 1.7, z: 0.2, ...GSAP_CONFIG });
     } else {
-      gsap.to(cursorRef.current.scale, {
-        x: 1,
-        y: 1,
-        z: 0.75,
-        duration: 1.5,
-        ease: "elastic(1, 0.3)",
-      });
+      gsap.to(target, { x: 1, y: 1, z: 0.75, ...GSAP_CONFIG });
     }
-    document.body.style.cursor = "none";
-  }, [clicked, hovered, isDragging]);
+  }, [active, isDragging]);
+
+  const onDown = useCallback(() => setPressed(true), []);
+  const onUp = useCallback(() => setPressed(false), []);
 
   useEffect(() => {
-    window.addEventListener("pointerdown", () => {
-      setClicked(true);
-    });
-    window.addEventListener("pointerup", () => {
-      setClicked(false);
-    });
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
     return () => {
-      window.removeEventListener("pointerdown", () => {});
-      window.removeEventListener("pointerup", () => {});
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
     };
-  }, []);
+  }, [onDown, onUp]);
 
-  const material = useMemo(() => {
-    return (
+  const material = useMemo(
+    () => (
       <MeshTransmissionMaterial
         color="white"
         metalness={0}
@@ -74,33 +63,35 @@ export default function CustomCursor() {
         reflectivity={reflectivity}
         chromaticAberration={0.1}
         clearcoat={0.4}
-        resolution={1024}
+        resolution={256}
         clearcoatRoughness={0.05}
         iridescence={0.9}
         iridescenceIOR={0.1}
         iridescenceThicknessRange={[0, 140]}
-        samples={4}
+        samples={2}
       />
-    );
-  }, [reflectivity]);
+    ),
+    [reflectivity]
+  );
+
+  const capsuleArgs = isDragging ? CAPSULE_DRAG : CAPSULE_IDLE;
 
   return (
-    <group ref={cursorRef}>
+    <group ref={groupRef}>
       <Capsule
-        scale={[1, 1, 1]}
-        args={isDragging ? [0.08, 0.1, 64, 64] : [0.1, 0.3, 64, 64]}
+        args={capsuleArgs}
         position={[0, 0, 0.1]}
-        rotation={[0, 0, -Math.PI / 2]}
-        visible={clicked || hovered || isDragging}
+        rotation={[0, 0, -HALF_PI]}
+        visible={active || isDragging}
       >
         {material}
       </Capsule>
 
       <Sphere
         scale={[1, 1, 0.12]}
-        args={[0.1, 64, 64]}
+        args={SPHERE_ARGS}
         position={[0, 0, 0.1]}
-        visible={!clicked && !hovered && !isDragging}
+        visible={!active && !isDragging}
       >
         {material}
       </Sphere>

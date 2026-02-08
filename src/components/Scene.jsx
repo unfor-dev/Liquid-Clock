@@ -1,14 +1,10 @@
-import React, { Suspense } from "react";
+import { Suspense, memo } from "react";
 import { Environment } from "@react-three/drei";
 
-function Scene() {
+export default memo(function Scene() {
   return (
-    <>
-      <Suspense fallback={null}>
-        <Environment preset={"warehouse"} environmentIntensity={0.25} />
-      </Suspense>
-    </>
+    <Suspense fallback={null}>
+      <Environment preset="warehouse" environmentIntensity={0.25} />
+    </Suspense>
   );
-}
-
-export default Scene;
+})
